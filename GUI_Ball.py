@@ -7,30 +7,24 @@ Ball class
 
 Inherits from Mobile_Object
     - The image is a circle
-    - Init, update and detect_other_obj_hit methods are overriden
+    - Init, update and detect_other_obj_hit methods are overriden and
+    bounce() is added to handle collisions
 
 Collisions:
     - Top or bottom boundaries: symmetric bounce 
     - Left or right boundaries: score for bat2 or bat1 respectively
-    - Bat: symmetric bounce if collides in centre of bat; assymetric
-        bounde otherwise
+    - Bat: the angle after colliding depends on which part of the 
+    bat is hit
 """
 
 # ------------------------------------------
 # IMPORTS
 # ------------------------------------------
 
-from hashlib import new
-
-
 try:
-    import pygame
-    import pygame.locals
-    import pygame.time
-    import math
     import random
     from Constants import *
-    from Mobile_Object import *
+    import GUI_Mobile_Object as mo
 except ImportError as err:
     print ("Error: couldn't load module" + str(err) + ". Exiting...")
     exit()
@@ -47,7 +41,8 @@ SPEED_MOD_DEFAULT = 12
 # ------------------------------------------
 
 def gen_random_init_ang_ball():
-    # Generate random init angle no vertical
+    # Generate random init angle non vertical
+    # Returns angle:Float
     angle = PI*(-1 + 2*random.random())  # random in [-pi, pi] rad
     while ( ( (abs(angle) > (3/8)*PI) and (abs(angle) < (5/8)*PI) )
             or (abs(angle) < (1/10)*PI) or (abs(angle) > (9/10)*PI) ):
@@ -58,10 +53,17 @@ def gen_random_init_ang_ball():
 # CLASSES DEFINITIONS
 # ------------------------------------------
 
-class Ball(Mobile_Object):
+class Ball(mo.Mobile_Object):
+    """
+    Attributes:
+        - Same as for GUI_Mobile_Object
+    Methods:
+        - __init__, update and detect_other_obj_hit methods are overriden
+        - bounce() is added
+    """
 
-    def __init__(self, radius=RADIUS_DEFAULT, pos_init=None, colour=COLOUR_DEFAULT,
-            speed_angle_init=SPEED_ANG_DEFAULT, speed_mod_init=SPEED_MOD_DEFAULT):
+    def __init__(self, radius=RADIUS_DEFAULT, pos_init=None, colour=mo.COLOUR_DEFAULT,
+            speed_angle_init=mo.SPEED_ANG_DEFAULT, speed_mod_init=SPEED_MOD_DEFAULT):
 
         # sprite's constructor
         pygame.sprite.Sprite.__init__(self)
@@ -99,7 +101,7 @@ class Ball(Mobile_Object):
         
     def update(self, screen, background, mob_objs_dic):
         # Implements specific collision management for ball object.
-        # Returns score (0 no score, 1 score for bat1, 2 score for bat2)
+        # Returns score:Int (SCORE_NONE, SCORE_BAT1 for bat1, SCORE_BAT2 for bat2)
 
         # Init state
         speed_to_consume = self.vector[1]
@@ -114,10 +116,10 @@ class Ball(Mobile_Object):
                 for collision in collisions:
                     # Check if there have been collisions with borders
                     if (collision[0] == COLLISION_BOUND_LEFT_ID):
-                        score = 2
+                        score = SCORE_BAT2
                         keep_moving = False
                     elif (collision[0] == COLLISION_BOUND_RIGHT_ID):
-                        score = 1
+                        score = SCORE_BAT1
                         keep_moving = False
                     elif (collision[0] == COLLISION_BOUND_TOP_ID):
                         self.bounce(BALL_HOR_BOUNCE)
@@ -130,57 +132,16 @@ class Ball(Mobile_Object):
                     # Check collisions with other mobile objects
                     elif (collision[0] == BAT1_ID):
                         self.bounce(BALL_VERT_BOUNCE, collision[1])
-                        self.rect.right += 10
+                        self.rect.left = mob_objs_dic[BAT1_ID].rect.right
                     elif (collision[0] == BAT2_ID):
                         self.bounce(BALL_VERT_BOUNCE, collision[1])
-                        self.rect.left -= 10
+                        self.rect.right = mob_objs_dic[BAT2_ID].rect.left
 
             speed_to_consume -= self.speed_mod_step         # Part of the speed is consumed
             screen.blit(background, self.rect, self.rect)
             self.sprite.draw(screen)
 
         return score
-
-    # def bounce(self, orientation, bat_height=0):
-    #     # Calculates new angle of the ball after hitting an obstacle
-    #     (curr_ang, curr_speed) = self.vector
-    #     if (orientation == BALL_HOR_BOUNCE):        # ball hits horizontal obstacle
-    #         new_ang = -curr_ang
-    #     elif (orientation == BALL_VERT_BOUNCE):     # ball hits vertical obstacle (bat)
-    #         # First, calculate symmetric angle
-    #         if (curr_ang > 0):
-    #             new_ang_sym = PI - curr_ang
-    #         else:
-    #             new_ang_sym = - curr_ang - PI
-    #         # Now, the previous angle is modifed according to part of the bat that was hit
-    #         if (bat_height == COLLISION_BAT_1_5):
-    #             new_ang = new_ang_sym*1.1
-    #         elif (bat_height == COLLISION_BAT_2_5):
-    #             new_ang = new_ang_sym*1.05
-    #         elif (bat_height == COLLISION_BAT_3_5):
-    #             new_ang = new_ang_sym*1
-    #         elif (bat_height == COLLISION_BAT_4_5):
-    #             new_ang = new_ang_sym*0.95
-    #         elif (bat_height == COLLISION_BAT_5_5):
-    #             new_ang = new_ang_sym*0.9
-    #         # Avoid the ball angle to exceed its angle quadrant; e.g. if new_angle_temp was 85º, 
-    #         # new_angle should not exceed 90º
-    #         if (new_ang_sym < PI/2 and new_ang > 0.90*PI/2):
-    #             new_ang = new_ang_sym
-    #         elif (new_ang_sym > -PI/2 and new_ang < -0.90*PI/2):
-    #             new_ang = new_ang_sym
-            
-    #     # Do not allow close to vertical angles to make the game funnier
-    #     if (new_ang > 0.85*PI/2 and new_ang < PI/2):
-    #         new_ang = 0.85*PI/2
-    #     elif (new_ang > PI/2 and new_ang < 1.15*PI/2):
-    #         new_ang = 1.15*PI/2
-    #     elif (new_ang < -0.85*PI/2 and new_ang > -PI/2):
-    #         new_ang = -0.85*PI/2
-    #     elif (new_ang < -PI/2 and new_ang > -1.15*PI/2):
-    #         new_ang = -1.15*PI/2
-
-    #     self.vector = (new_ang,curr_speed)
     
     def bounce(self, orientation, bat_height=0):
         # Calculates new angle of the ball after hitting an obstacle
@@ -190,7 +151,7 @@ class Ball(Mobile_Object):
         elif (orientation == BALL_VERT_BOUNCE):     # ball hits vertical obstacle (bat)
             # The angle is calculated according to part of the bat that was hit
             if (bat_height == COLLISION_BAT_1_5):
-                new_ang = PI/4
+                new_ang = PI*1/5
             elif (bat_height == COLLISION_BAT_2_5):
                 new_ang = PI/8
             elif (bat_height == COLLISION_BAT_3_5):
@@ -198,7 +159,7 @@ class Ball(Mobile_Object):
             elif (bat_height == COLLISION_BAT_4_5):
                 new_ang = -PI/8
             elif (bat_height == COLLISION_BAT_5_5):
-                new_ang = -PI/4
+                new_ang = -PI*1/5
             # According to previous angle, the ball now will go the previous side
             if (curr_ang > -PI/2 and curr_ang < PI/2):  # ball was going to the right
                 new_ang = PI - new_ang
@@ -222,24 +183,69 @@ class Ball(Mobile_Object):
                     collision_height = COLLISION_BAT_3_5
                 elif (ball.rect.centery < (bat.rect.top+(4/5)*bat.rect.height) ):
                     collision_height = COLLISION_BAT_4_5
-                # elif (ball.rect.centery > (bat.rect.top+(5/5)*bat.rect.height) ):
+                # elif (ball.rect.centery < (bat.rect.top+(5/5)*bat.rect.height) ):
                 else:
                     collision_height = COLLISION_BAT_5_5
                 collisions.append((bat_id,collision_height))
         return collisions
 
+    # Old versions of methods
+    """
+    def bounce(self, orientation, bat_height=0):
+        # Calculates new angle of the ball after hitting an obstacle
+        (curr_ang, curr_speed) = self.vector
+        if (orientation == BALL_HOR_BOUNCE):        # ball hits horizontal obstacle
+            new_ang = -curr_ang
+        elif (orientation == BALL_VERT_BOUNCE):     # ball hits vertical obstacle (bat)
+            # First, calculate symmetric angle
+            if (curr_ang > 0):
+                new_ang_sym = PI - curr_ang
+            else:
+                new_ang_sym = - curr_ang - PI
+            # Now, the previous angle is modifed according to part of the bat that was hit
+            if (bat_height == COLLISION_BAT_1_5):
+                new_ang = new_ang_sym*1.1
+            elif (bat_height == COLLISION_BAT_2_5):
+                new_ang = new_ang_sym*1.05
+            elif (bat_height == COLLISION_BAT_3_5):
+                new_ang = new_ang_sym*1
+            elif (bat_height == COLLISION_BAT_4_5):
+                new_ang = new_ang_sym*0.95
+            elif (bat_height == COLLISION_BAT_5_5):
+                new_ang = new_ang_sym*0.9
+            # Avoid the ball angle to exceed its angle quadrant; e.g. if new_angle_temp was 85º, 
+            # new_angle should not exceed 90º
+            if (new_ang_sym < PI/2 and new_ang > 0.90*PI/2):
+                new_ang = new_ang_sym
+            elif (new_ang_sym > -PI/2 and new_ang < -0.90*PI/2):
+                new_ang = new_ang_sym
+            
+        # Do not allow close to vertical angles to make the game funnier
+        if (new_ang > 0.85*PI/2 and new_ang < PI/2):
+            new_ang = 0.85*PI/2
+        elif (new_ang > PI/2 and new_ang < 1.15*PI/2):
+            new_ang = 1.15*PI/2
+        elif (new_ang < -0.85*PI/2 and new_ang > -PI/2):
+            new_ang = -0.85*PI/2
+        elif (new_ang < -PI/2 and new_ang > -1.15*PI/2):
+            new_ang = -1.15*PI/2
 
-    # def detect_other_obj_hit(self, mob_objs_dic):
-    #     # Returns a list of elements that the obj is colliding with
-    #     collisions = []
-    #     for mob_obj_key in mob_objs_dic:
-    #         mob_obj = mob_objs_dic[mob_obj_key]
-    #         # Collision with bat1
-    #         if (mob_obj_key == BAT1_ID and self.rect.colliderect(mob_obj)):
-    #             if (self.)
-    #         # Collision with bat2
-    #         if (mob_obj_key == BAT2_ID and self.rect.colliderect(mob_obj)):
-    #             pass
-    #         # if (mob_obj != self and self.rect.colliderect(mob_obj)):
-    #         #     collisions.append((mob_obj_key,0))
-    #     return collisions
+        self.vector = (new_ang,curr_speed)
+    """
+
+    """
+    def detect_other_obj_hit(self, mob_objs_dic):
+        # Returns a list of elements that the obj is colliding with
+        collisions = []
+        for mob_obj_key in mob_objs_dic:
+            mob_obj = mob_objs_dic[mob_obj_key]
+            # Collision with bat1
+            if (mob_obj_key == BAT1_ID and self.rect.colliderect(mob_obj)):
+                if (self.)
+            # Collision with bat2
+            if (mob_obj_key == BAT2_ID and self.rect.colliderect(mob_obj)):
+                pass
+            # if (mob_obj != self and self.rect.colliderect(mob_obj)):
+            #     collisions.append((mob_obj_key,0))
+        return collisions
+    """
