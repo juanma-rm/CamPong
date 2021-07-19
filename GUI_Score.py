@@ -2,26 +2,23 @@
 # DESCRIPTION OF MODULE
 # ------------------------------------------
 
-# CamPong Score class
+"""
+CamPong Score class
 
+It stores the score of a bat and may be used to display the
+corresponding text on the screen
+"""
 
 # ------------------------------------------
 # IMPORTS
 # ------------------------------------------
 
 try:
-
+    import os
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     import pygame
-    import pygame.locals
-    # from pygame.locals import *
-    import pygame.time
     import math
-    import random
-    import getopt
-    from socket import *
-
     from Constants import *
-    
 except ImportError as err:
     print ("Error: couldn't load module" + str(err) + ". Exiting...")
     exit()
@@ -32,10 +29,15 @@ except ImportError as err:
 
 class Score(pygame.sprite.Sprite):
     """
-    TODO
-    Returns: 
-    Functions:  ... TODO
-    Attributes:  ... TODO
+    Attributes:
+        - font:Font
+        - text:String
+        - image:Surface
+        - rect:Rect. Determines position and hitbox
+        - position:(Int,Int). (X,Y)
+        - area:Rect. Screen the object is moving across
+        - sprite:Sprite
+    Methods: __init__, update, calcnewpos
     """
     
     TEXT_SIZE = 20
@@ -46,7 +48,6 @@ class Score(pygame.sprite.Sprite):
         self.text = "0 - 0"
         # image (appearance)
         self.image = self.font.render(self.text, True, COLOUR_WHITE)
-        # self.image = pygame.Surface((10*self.TEXT_SIZE, 2*self.TEXT_SIZE))
         # rect (hitbox)
         self.rect = self.image.get_rect()
         self.position = position_init
@@ -55,13 +56,16 @@ class Score(pygame.sprite.Sprite):
         # area that contains the text (i.e. the board itself)
         screen = pygame.display.get_surface()
         self.area = screen.get_rect()
+        # sprite
+        self.sprite = pygame.sprite.RenderPlain(self)
 
-
-    def update(self, score1, score2):
+    def update(self, score1, score2, screen, background):
         self.text = str(score1) + " - " + str(score2)
         self.image = self.font.render(self.text, True, COLOUR_WHITE)
         self.rect = self.image.get_rect()
         self.rect.center = self.position
+        screen.blit(background, self.rect, self.rect)
+        self.sprite.draw(screen)
 
     def calcnewpos(self,rect,vector):
         (angle,z) = vector

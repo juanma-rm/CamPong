@@ -25,6 +25,8 @@ Axis: X (positive to the right), Y (positive to the bottom)
 # ------------------------------------------
 
 try:
+    import os
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     import pygame
     import math
     from Constants import *
@@ -42,12 +44,6 @@ WIDTH_DEFAULT = 10
 SPEED_ANG_DEFAULT = 0
 SPEED_MOD_DEFAULT = 12
 COLOUR_DEFAULT = COLOUR_WHITE
-
-# ------------------------------------------
-# FUNCTIONS DEFINITIONS
-# ------------------------------------------
-
-
 
 # ------------------------------------------
 # CLASSES DEFINITIONS
@@ -97,9 +93,9 @@ class Mobile_Object(pygame.sprite.Sprite):
         # (e.g. the object is so fast that goes out of two closer bounds, cross other
         #  objects, ...). For each step, collisions are checked
         self.speed_mod_step = min(self.rect.width,self.rect.height)/2
-        self.reinit()
         # sprite
         self.sprite = pygame.sprite.RenderPlain(self)
+        self.reinit()
     
     def reinit(self, screen=None, background=None):
         # Initializes the object position and speed to the init values

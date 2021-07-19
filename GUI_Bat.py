@@ -20,12 +20,8 @@ Collisions:
 # ------------------------------------------
 
 try:
-
-    import pygame
-    import pygame.locals
-    import math
     from Constants import *
-    from Mobile_Object import *    
+    import GUI_Mobile_Object as mo
 except ImportError as err:
     print ("Error: couldn't load module" + str(err) + ". Exiting...")
     exit()
@@ -41,19 +37,18 @@ SPEED_MOD_DEFAULT_BAT = 10
 COLOUR_DEFAULT_BAT = COLOUR_WHITE
 
 # ------------------------------------------
-# FUNCTIONS DEFINITIONS
-# ------------------------------------------
-
-
-
-# ------------------------------------------
 # CLASSES DEFINITIONS
 # ------------------------------------------
 
-class Bat(Mobile_Object):
-
+class Bat(mo.Mobile_Object):
+    """
+    Attributes:
+        - Same as for GUI_Mobile_Object
+    Methods:
+        - __init__, update and detect_other_obj_hit methods are overriden
+    """
     def __init__(self, height=HEIGHT_DEFAULT_BAT, width=WIDTH_DEFAULT_BAT,
-            pos_init=None, colour=COLOUR_DEFAULT,
+            pos_init=None, colour=mo.COLOUR_DEFAULT,
             speed_angle_init=SPEED_ANG_DEFAULT_BAT, speed_mod_init=SPEED_MOD_DEFAULT_BAT):
 
         # sprite's constructor
