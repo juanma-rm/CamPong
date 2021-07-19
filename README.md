@@ -46,6 +46,13 @@ Note: steps 2 and onwards must be executed from the terminal, possibly requiring
    optional arguments: \
         -h, --help      show this help message and exit
 
+## Keyboard control:
+
+ - Player 1 (left): w (go up) and s (go down)
+ - Player 2 (right): up arrow (go up) and down arrow (go down)
+
+See Introduction to know more about how cam control works
+
 ## Some interesting modifications on game behaviour
 
  - Constants.py - FPS: may be adjusted to improve the performance.
